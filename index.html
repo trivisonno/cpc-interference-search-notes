@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Change Processing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        button {
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .cleaned-text {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CPC Symbols to Interference Search notes</h1>
+    <textarea id="inputText" placeholder="Paste or type text here..."></textarea>
+    <button id="clearButton">Clear</button>
+    <div class="cleaned-text">
+        Cleaned Text: <span id="cleanedText"></span>
+    </div>
+    <table id="outputTable">
+        <thead>
+            <tr>
+                <th>US Class/CPC Symbol</th>
+                <th>US Subclass/CPC Group</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const clearButton = document.getElementById('clearButton');
+        const tbody = document.querySelector('#outputTable tbody');
+        const cleanedTextDiv = document.getElementById('cleanedText');
+
+        function processText() {
+            // Get text from textarea
+            let text = inputText.value;
+
+            // Define regex to match the pattern
+            let regex = /\((.*?)\)\.cpc\./;
+            let match = regex.exec(text);
+            
+            if (match) {
+                let content = match[1]; // Get the content inside the parentheses
+
+                // Split by 'or' and clean up spaces
+                let parts = content.split(' or ').map(part => part.trim());
+
+                // Use an object to group by the alphabetic part
+                let result = {};
+                parts.forEach(part => {
+                    let alphaPart = part.match(/[A-Z]+\d+[A-Z]?/)[0];
+                    let numPart = part.replace(alphaPart, '').trim();
+
+                    if (!result[alphaPart]) {
+                        result[alphaPart] = [];
+                    }
+                    result[alphaPart].push(numPart);
+                });
+
+                // Clear previous table rows
+                tbody.innerHTML = '';
+
+                // Populate table with new data
+                for (let key in result) {
+                    let row = document.createElement('tr');
+                    let cell1 = document.createElement('td');
+                    cell1.textContent = key;
+                    let cell2 = document.createElement('td');
+                    cell2.textContent = result[key].join(' ');
+
+                    row.appendChild(cell1);
+                    row.appendChild(cell2);
+                    tbody.appendChild(row);
+                }
+
+                // Generate cleaned text
+                let cleanedText = parts.join(' ');
+                cleanedTextDiv.textContent = cleanedText;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="2">No valid data found.</td></tr>';
+            }
+        }
+
+        // Event listener for any change in the textarea
+        inputText.addEventListener('input', processText);
+
+        // Clear button functionality
+        clearButton.addEventListener('click', () => {
+            inputText.value = '';
+            tbody.innerHTML = '';
+            cleanedTextDiv.textContent = '';
+        });
+    </script>
+
+</body>
+</html>
