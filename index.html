@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Change Processing</title>
+    <title>CAT to Search Notes</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,6 +33,12 @@
             margin-bottom: 20px;
             font-weight: bold;
         }
+        #copyButton {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +48,7 @@
     <button id="clearButton">Clear</button>
     <div class="cleaned-text">
         Cleaned Text: <span id="cleanedText"></span>
+        <button id="copyButton">Copy</button>
     </div>
     <table id="outputTable">
         <thead>
@@ -71,8 +78,8 @@
             if (match) {
                 let content = match[1]; // Get the content inside the parentheses
 
-                // Split by 'or' and clean up spaces
-                let parts = content.split(' or ').map(part => part.trim());
+                // Split by 'or'/'OR' (case insensitive) and clean up spaces
+                let parts = content.split(/ or | OR /i).map(part => part.trim());
 
                 // Use an object to group by the alphabetic part
                 let result = {};
@@ -118,6 +125,16 @@
             inputText.value = '';
             tbody.innerHTML = '';
             cleanedTextDiv.textContent = '';
+        });
+
+        // Copy button functionality
+        copyButton.addEventListener('click', () => {
+            const textToCopy = cleanedTextDiv.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // alert('Cleaned text copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy text: ' + err);
+            });
         });
     </script>
 
