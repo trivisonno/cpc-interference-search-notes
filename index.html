@@ -39,6 +39,12 @@
             font-size: 14px;
             cursor: pointer;
         }
+        .copy-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -50,6 +56,7 @@
         Cleaned Text: <span id="cleanedText"></span>
         <button id="copyButton">Copy</button>
     </div>
+
     <table id="outputTable">
         <thead>
             <tr>
@@ -61,11 +68,16 @@
         </tbody>
     </table>
 
+    <p></p>
+    <button id="copySpecificTextButton">Copy "Text, inventor, applicant, similarity search tool in pe2e"</button>
+
+
     <script>
         const inputText = document.getElementById('inputText');
         const clearButton = document.getElementById('clearButton');
         const tbody = document.querySelector('#outputTable tbody');
         const cleanedTextDiv = document.getElementById('cleanedText');
+        const copySpecificTextButton = document.getElementById('copySpecificTextButton');
 
         function processText() {
             // Get text from textarea
@@ -101,8 +113,34 @@
                     let row = document.createElement('tr');
                     let cell1 = document.createElement('td');
                     cell1.textContent = key;
+
+                    let copyBtn1 = document.createElement('button');
+                    copyBtn1.textContent = "Copy";
+                    copyBtn1.className = 'copy-btn';
+                    copyBtn1.addEventListener('click', () => {
+                        navigator.clipboard.writeText(key).then(() => {
+                            // alert('CPC Symbol copied to clipboard!');
+                        }).catch(err => {
+                            alert('Failed to copy text: ' + err);
+                        });
+                    });
+
                     let cell2 = document.createElement('td');
                     cell2.textContent = result[key].join(' ');
+
+                    let copyBtn2 = document.createElement('button');
+                    copyBtn2.textContent = "Copy";
+                    copyBtn2.className = 'copy-btn';
+                    copyBtn2.addEventListener('click', () => {
+                        navigator.clipboard.writeText(result[key].join(' ')).then(() => {
+                            // alert('CPC Group copied to clipboard!');
+                        }).catch(err => {
+                            alert('Failed to copy text: ' + err);
+                        });
+                    });
+
+                    cell1.appendChild(copyBtn1);
+                    cell2.appendChild(copyBtn2);
 
                     row.appendChild(cell1);
                     row.appendChild(cell2);
@@ -127,13 +165,24 @@
             cleanedTextDiv.textContent = '';
         });
 
-        // Copy button functionality
+        // Copy button functionality for cleaned text
+        const copyButton = document.getElementById('copyButton');
         copyButton.addEventListener('click', () => {
             const textToCopy = cleanedTextDiv.textContent;
             navigator.clipboard.writeText(textToCopy).then(() => {
                 // alert('Cleaned text copied to clipboard!');
             }).catch(err => {
                 alert('Failed to copy text: ' + err);
+            });
+        });
+
+        // Copy button functionality for the specific text
+        copySpecificTextButton.addEventListener('click', () => {
+            const specificText = "Text, inventor, applicant, similarity search tool in pe2e";
+            navigator.clipboard.writeText(specificText).then(() => {
+                // alert('Specific text copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy specific text: ' + err);
             });
         });
     </script>
