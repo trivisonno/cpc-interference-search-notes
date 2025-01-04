@@ -71,6 +71,16 @@
     <p></p>
     <button id="copySpecificTextButton">Copy "Text, inventor, applicant, similarity search tool in pe2e"</button>
 
+    <p></p>
+    <h1>Number Range Counter</h1>
+  <label for="numberRange">Enter Number Range:</label>
+  <input 
+    type="text" 
+    id="numberRange" 
+    placeholder="e.g., 1, 3-5, 6, 7, 10-22" 
+    oninput="countNumbers()" 
+  />
+  <p id="result">Total Numbers: 0</p>
 
     <script>
         const inputText = document.getElementById('inputText');
@@ -185,6 +195,30 @@
                 alert('Failed to copy specific text: ' + err);
             });
         });
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        function countNumbers() {
+      const input = document.getElementById("numberRange").value;
+      // Split the input, remove any empty entries caused by trailing commas
+      const ranges = input.split(",").map(range => range.trim()).filter(range => range !== "");
+      let count = 0;
+
+      ranges.forEach(range => {
+        if (range.includes("-")) {
+          // Handle ranges like "3-5"
+          const [start, end] = range.split("-").map(Number);
+          if (!isNaN(start) && !isNaN(end) && start <= end) {
+            count += end - start + 1; // Add the count of numbers in the range
+          }
+        } else if (!isNaN(Number(range))) {
+          // Handle single numbers like "1"
+          count += 1;
+        }
+      });
+
+      // Display result
+      document.getElementById("result").innerText = `Total Numbers: ${count}`;
+    }
     </script>
 
 </body>
