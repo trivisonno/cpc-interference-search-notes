@@ -82,6 +82,16 @@
   />
   <p id="result">Total Numbers: 0</p>
 
+
+<h1>String Parser</h1>
+
+<label for="inputString">Enter String:</label>
+<textarea id="inputString" rows="5" cols="50"></textarea>
+
+<button id="parseButton">Parse</button>
+
+<div id="output"></div>
+
     <script>
         const inputText = document.getElementById('inputText');
         const clearButton = document.getElementById('clearButton');
@@ -219,6 +229,47 @@
       // Display result
       document.getElementById("result").innerText = `Total Numbers: ${count}`;
     }
+    </script>
+
+    <script>
+        const inputStringElement = document.getElementById('inputString');
+        const parseButton = document.getElementById('parseButton');
+        const outputElement = document.getElementById('output');
+
+        parseButton.addEventListener('click', function () {
+                const inputString = inputStringElement.value;
+
+                // Regular expression to match the desired pattern (global flag for multiple matches)
+                const regex = /(\w{2})-(\d+)-(\w{1,2})/g;
+                const matches = [...inputString.matchAll(regex)];
+
+                if (matches.length > 0) {
+                    // Build HTML output with line breaks and copy buttons
+                    let outputHtml = matches.map((match, idx) => {
+                        const value = match[0];
+                        const btnId = `copyMatchBtn${idx}`;
+                        return `
+                <span>${value}</span>
+                <button id="${btnId}" class="copy-btn" style="margin-left:8px;">Copy</button>
+                <br/>
+            `;
+                    }).join('');
+                    outputElement.innerHTML = outputHtml;
+
+                    // Add event listeners for each copy button
+                    matches.forEach((match, idx) => {
+                        const btnId = `copyMatchBtn${idx}`;
+                        const btn = document.getElementById(btnId);
+                        btn.addEventListener('click', () => {
+                            navigator.clipboard.writeText(match[0]).catch(err => {
+                                alert('Failed to copy text: ' + err);
+                            });
+                        });
+                    });
+                } else {
+                    outputElement.textContent = "No match found.";
+                }
+            });
     </script>
 
 </body>
