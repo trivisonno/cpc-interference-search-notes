@@ -45,6 +45,25 @@
             font-size: 14px;
             cursor: pointer;
         }
+        .species-controls label {
+            margin-right: 6px;
+        }
+        .species-controls input[type="number"] {
+            width: 80px;
+            margin-right: 20px;
+            padding: 4px;
+            font-size: 14px;
+        }
+        .species-group {
+            margin-bottom: 20px;
+        }
+        .species-group h3 {
+            margin-bottom: 6px;
+        }
+        .species-group textarea {
+            height: 160px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -74,14 +93,26 @@
     <p></p>
     <h1>Number Range Counter</h1>
   <label for="numberRange">Enter Number Range:</label>
-  <input 
-    type="text" 
-    id="numberRange" 
-    placeholder="e.g., 1, 3-5, 6, 7, 10-22" 
-    oninput="countNumbers()" 
+  <input
+    type="text"
+    id="numberRange"
+    placeholder="e.g., 1, 3-5, 6, 7, 10-22"
+    oninput="countNumbers()"
   />
   <p id="result">Total Numbers: 0</p>
 
+    <p></p>
+    <h1>Species Embodiment List Generator</h1>
+    <p>Generates species/embodiment lines in the form <code>Species A1: a first embodiment (Fig. )</code> for N species across M letters.</p>
+    <div class="species-controls">
+        <label for="speciesCount">Species per letter (N):</label>
+        <input type="number" id="speciesCount" min="1" max="1000" value="5" />
+        <label for="letterCount">Number of letters (M):</label>
+        <input type="number" id="letterCount" min="1" max="100" value="1" />
+        <button id="generateSpeciesButton">Generate</button>
+        <button id="copyAllSpeciesButton" class="copy-btn">Copy All</button>
+    </div>
+    <div id="speciesGroups"></div>
 
     <script>
         const inputText = document.getElementById('inputText');
@@ -97,7 +128,7 @@
             // Define regex to match the pattern
             let regex = /\((.*?)\)\.cpc\./;
             let match = regex.exec(text);
-            
+
             if (match) {
                 let content = match[1]; // Get the content inside the parentheses
 
@@ -220,6 +251,152 @@
       // Display result
       document.getElementById("result").innerText = `Total Numbers: ${count}`;
     }
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        // Species Embodiment List Generator
+        //
+        // Produces lines like:
+        //   Species A1: a first embodiment (Fig. )
+        //   Species A2: a second embodiment (Fig. )
+        //   ...
+        //   Species AN: an nth embodiment (Fig. )
+        // repeated across M letters (A, B, C, ... then AA, AB, ... past 26).
+
+        const onesWords = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+        const onesOrdinal = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth'];
+        const teenWords = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+        const teenOrdinal = ['tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
+        const tensWords = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+        const tensOrdinal = ['', '', 'twentieth', 'thirtieth', 'fortieth', 'fiftieth', 'sixtieth', 'seventieth', 'eightieth', 'ninetieth'];
+
+        // Cardinal number (in words) for numbers up to the low millions.
+        function numberToWords(num) {
+            if (num === 0) return 'zero';
+            if (num < 10) return onesWords[num];
+            if (num < 20) return teenWords[num - 10];
+            if (num < 100) {
+                const t = Math.floor(num / 10), r = num % 10;
+                return tensWords[t] + (r ? '-' + onesWords[r] : '');
+            }
+            if (num < 1000) {
+                const h = Math.floor(num / 100), r = num % 100;
+                return onesWords[h] + ' hundred' + (r ? ' ' + numberToWords(r) : '');
+            }
+            if (num < 1000000) {
+                const th = Math.floor(num / 1000), r = num % 1000;
+                return numberToWords(th) + ' thousand' + (r ? ' ' + numberToWords(r) : '');
+            }
+            return String(num);
+        }
+
+        // Ordinal number (in words) for numbers up to the low millions; falls
+        // back to a numeral-based ordinal (e.g. "1234567th") beyond that.
+        function numberToOrdinalWords(num) {
+            if (num < 10) return onesOrdinal[num];
+            if (num < 20) return teenOrdinal[num - 10];
+            if (num < 100) {
+                const t = Math.floor(num / 10), r = num % 10;
+                return r ? tensWords[t] + '-' + onesOrdinal[r] : tensOrdinal[t];
+            }
+            if (num < 1000) {
+                const h = Math.floor(num / 100), r = num % 100;
+                return r ? onesWords[h] + ' hundred ' + numberToOrdinalWords(r) : onesWords[h] + ' hundredth';
+            }
+            if (num < 1000000) {
+                const th = Math.floor(num / 1000), r = num % 1000;
+                return r ? numberToWords(th) + ' thousand ' + numberToOrdinalWords(r) : numberToWords(th) + ' thousandth';
+            }
+            return num + 'th';
+        }
+
+        // "a" vs "an" for the given ordinal-word phrase.
+        function articleFor(words) {
+            const firstWord = words.split(/[\s-]/)[0];
+            if (firstWord === 'one') return 'a';
+            return /^[aeiou]/i.test(firstWord) ? 'an' : 'a';
+        }
+
+        // Spreadsheet-style letter label for a 1-based index: 1 -> A, 26 -> Z, 27 -> AA, ...
+        function toLetters(num) {
+            let letters = '';
+            while (num > 0) {
+                const rem = (num - 1) % 26;
+                letters = String.fromCharCode(65 + rem) + letters;
+                num = Math.floor((num - 1) / 26);
+            }
+            return letters;
+        }
+
+        function buildSpeciesLines(letter, n) {
+            const lines = [];
+            for (let i = 1; i <= n; i++) {
+                const ordinal = numberToOrdinalWords(i);
+                const article = articleFor(ordinal);
+                lines.push(`Species ${letter}${i}: ${article} ${ordinal} embodiment (Fig. )`);
+            }
+            return lines;
+        }
+
+        const speciesGroupsDiv = document.getElementById('speciesGroups');
+        const generateSpeciesButton = document.getElementById('generateSpeciesButton');
+        const copyAllSpeciesButton = document.getElementById('copyAllSpeciesButton');
+
+        let allSpeciesText = '';
+
+        function generateSpecies() {
+            const n = Math.max(1, parseInt(document.getElementById('speciesCount').value, 10) || 1);
+            const m = Math.max(1, parseInt(document.getElementById('letterCount').value, 10) || 1);
+
+            speciesGroupsDiv.innerHTML = '';
+            const allGroupsText = [];
+
+            for (let g = 1; g <= m; g++) {
+                const letter = toLetters(g);
+                const lines = buildSpeciesLines(letter, n);
+                const groupText = lines.join('\n');
+                allGroupsText.push(groupText);
+
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'species-group';
+
+                const heading = document.createElement('h3');
+                heading.textContent = `Group ${letter}`;
+                groupDiv.appendChild(heading);
+
+                const textarea = document.createElement('textarea');
+                textarea.readOnly = true;
+                textarea.value = groupText;
+                groupDiv.appendChild(textarea);
+
+                const copyGroupButton = document.createElement('button');
+                copyGroupButton.textContent = `Copy Group ${letter}`;
+                copyGroupButton.className = 'copy-btn';
+                copyGroupButton.addEventListener('click', () => {
+                    navigator.clipboard.writeText(groupText).catch(err => {
+                        alert('Failed to copy text: ' + err);
+                    });
+                });
+                groupDiv.appendChild(copyGroupButton);
+
+                speciesGroupsDiv.appendChild(groupDiv);
+            }
+
+            allSpeciesText = allGroupsText.join('\n\n');
+        }
+
+        generateSpeciesButton.addEventListener('click', generateSpecies);
+
+        copyAllSpeciesButton.addEventListener('click', () => {
+            if (!allSpeciesText) {
+                generateSpecies();
+            }
+            navigator.clipboard.writeText(allSpeciesText).catch(err => {
+                alert('Failed to copy text: ' + err);
+            });
+        });
+
+        // Generate an initial list on load.
+        generateSpecies();
     </script>
 
 
